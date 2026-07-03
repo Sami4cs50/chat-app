@@ -7,8 +7,38 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+  <!-- ===================== Welcome / Username Screen ===================== -->
+  <!-- Full-screen overlay shown before a user has claimed a username.
+       No login, no signup, no accounts — just a unique display name. -->
+  <div id="welcome-screen" class="welcome-screen">
+    <div class="welcome-card">
+      <div class="welcome-icon">#</div>
+      <h1>Welcome to Global Chat</h1>
+      <p class="welcome-subtitle">Pick a username to jump in. No account needed.</p>
+
+      <form id="username-form" class="username-form" autocomplete="off">
+        <label for="username-input" class="visually-hidden">Username</label>
+        <input
+          id="username-input"
+          type="text"
+          name="username"
+          placeholder="Username"
+          maxlength="20"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <p id="username-error" class="username-error" role="alert"></p>
+        <button type="submit" id="username-submit">Enter Chat</button>
+      </form>
+
+      <p class="welcome-rules">3–20 characters. Letters, numbers, and underscores only.</p>
+    </div>
+  </div>
+
+  <!-- ===================== Main App (hidden until username is set) ===================== -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
-  <div class="app">
+  <div id="app" class="app hidden">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -21,8 +51,31 @@
         <span id="online-count-text">Connecting...</span>
       </div>
 
+      <!-- Rooms -->
+      <div class="rooms-wrapper">
+        <div class="section-title-row">
+          <h2 class="section-title">Rooms</h2>
+          <button id="new-room-toggle" class="icon-button" aria-label="Create room" title="Create room">+</button>
+        </div>
+
+        <form id="create-room-form" class="create-room-form hidden">
+          <input
+            id="room-name-input"
+            type="text"
+            placeholder="Room name"
+            maxlength="30"
+            autocomplete="off"
+          />
+          <button type="submit">Create</button>
+        </form>
+        <p id="room-error" class="room-error"></p>
+
+        <ul id="room-list" class="room-list"></ul>
+      </div>
+
+      <!-- Online users in current room -->
       <div class="user-list-wrapper">
-        <h2 class="user-list-title">Online</h2>
+        <h2 class="section-title">Online in this room</h2>
         <ul id="user-list" class="user-list"></ul>
       </div>
 
@@ -40,13 +93,15 @@
     <!-- Main chat area -->
     <main class="chat-main">
       <header class="chat-header">
-        <button id="menu-toggle" class="menu-toggle" aria-label="Toggle user list">
+        <button id="menu-toggle" class="menu-toggle" aria-label="Toggle sidebar">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"></path>
           </svg>
         </button>
         <span class="hash">#</span>
-        <span>global</span>
+        <span id="room-name-header">global</span>
+        <button id="leave-room-button" class="leave-room-button hidden" title="Leave room">Leave Room</button>
+        <button id="delete-room-button" class="delete-room-button hidden" title="Delete room">Delete Room</button>
       </header>
 
       <div id="messages" class="messages" aria-live="polite"></div>
@@ -62,6 +117,11 @@
             rows="1"
             aria-label="Message input"
           ></textarea>
+          <button id="voice-button" type="button" aria-label="Record voice message" title="Record voice message">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"></path>
+            </svg>
+          </button>
           <button id="send-button" aria-label="Send message">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
               <path d="M2 21l21-9L2 3v7l15 2-15 2z"></path>
@@ -70,6 +130,7 @@
         </div>
         <div class="composer-meta">
           <span id="char-counter">0 / 500</span>
+          <span id="recording-status" class="recording-status"></span>
           <span id="composer-warning" class="composer-warning"></span>
         </div>
       </footer>
