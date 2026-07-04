@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Samy Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e1f22" />
+  <title>Global Chat</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,27 +13,56 @@
   <!-- Full-screen overlay shown before a user has claimed a username.
        No login, no signup, no accounts — just a unique display name. -->
   <div id="welcome-screen" class="welcome-screen">
+    <div class="welcome-orb welcome-orb-1"></div>
+    <div class="welcome-orb welcome-orb-2"></div>
+    <div class="welcome-orb welcome-orb-3"></div>
+
     <div class="welcome-card">
-      <div class="welcome-icon">#</div>
-      <h1>Welcome to Samy Chat</h1>
-      <p class="welcome-subtitle">Pick a username to jump in. No account needed.</p>
+      <div class="logo-mark logo-mark-lg" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="48" height="48" fill="none">
+          <defs>
+            <linearGradient id="logoGradWelcome" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#8b5cf6"/>
+              <stop offset="55%" stop-color="#5865f2"/>
+              <stop offset="100%" stop-color="#00c2ff"/>
+            </linearGradient>
+          </defs>
+          <path fill="url(#logoGradWelcome)" d="M24 4C12.95 4 4 12.06 4 22c0 5.06 2.32 9.62 6.08 12.86.3.26.47.65.44 1.05l-.4 5.2a1.2 1.2 0 0 0 1.66 1.2l6.32-2.74c.32-.14.68-.16 1.02-.06 1.55.45 3.2.7 4.88.7 11.05 0 20-8.06 20-18S35.05 4 24 4z"/>
+          <circle cx="16.5" cy="22" r="2.6" fill="#0b0c10" opacity="0.85"/>
+          <circle cx="24" cy="22" r="2.6" fill="#0b0c10" opacity="0.85"/>
+          <circle cx="31.5" cy="22" r="2.6" fill="#0b0c10" opacity="0.85"/>
+        </svg>
+      </div>
+
+      <h1>Welcome to Global Chat</h1>
+      <p class="welcome-subtitle">Pick a username and jump in instantly. No account, no password.</p>
 
       <form id="username-form" class="username-form" autocomplete="off">
         <label for="username-input" class="visually-hidden">Username</label>
-        <input
-          id="username-input"
-          type="text"
-          name="username"
-          placeholder="Username"
-          maxlength="20"
-          autocomplete="off"
-          spellcheck="false"
-        />
+        <div class="input-with-icon">
+          <span class="input-icon" aria-hidden="true">@</span>
+          <input
+            id="username-input"
+            type="text"
+            name="username"
+            placeholder="Username"
+            maxlength="20"
+            autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+          />
+        </div>
         <p id="username-error" class="username-error" role="alert"></p>
-        <button type="submit" id="username-submit">Enter Chat</button>
+        <button type="submit" id="username-submit">
+          <span>Enter Chat</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6"/>
+          </svg>
+        </button>
       </form>
 
-      <p class="welcome-rules">3–20 characters. Letters, numbers, and underscores only.</p>
+      <p class="welcome-rules">3–20 characters &middot; letters, numbers, and underscores only</p>
     </div>
   </div>
 
@@ -40,8 +70,23 @@
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
   <div id="app" class="app hidden">
     <!-- Sidebar -->
-    <aside class="sidebar">      <div class="sidebar-header">
-        <span class="server-icon">#</span>
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" width="24" height="24" fill="none">
+            <defs>
+              <linearGradient id="logoGradSidebar" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#8b5cf6"/>
+                <stop offset="55%" stop-color="#5865f2"/>
+                <stop offset="100%" stop-color="#00c2ff"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#logoGradSidebar)" d="M24 4C12.95 4 4 12.06 4 22c0 5.06 2.32 9.62 6.08 12.86.3.26.47.65.44 1.05l-.4 5.2a1.2 1.2 0 0 0 1.66 1.2l6.32-2.74c.32-.14.68-.16 1.02-.06 1.55.45 3.2.7 4.88.7 11.05 0 20-8.06 20-18S35.05 4 24 4z"/>
+            <circle cx="16.5" cy="22" r="2.6" fill="#0b0c10" opacity="0.85"/>
+            <circle cx="24" cy="22" r="2.6" fill="#0b0c10" opacity="0.85"/>
+            <circle cx="31.5" cy="22" r="2.6" fill="#0b0c10" opacity="0.85"/>
+          </svg>
+        </div>
         <h1>Global Chat</h1>
       </div>
 
@@ -90,14 +135,14 @@
     </aside>
 
     <!-- Main chat area -->
-    <main class="chat-main">
+    <main id="chat-main" class="chat-main">
       <header class="chat-header">
         <button id="menu-toggle" class="menu-toggle" aria-label="Toggle sidebar">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"></path>
           </svg>
         </button>
-        <span class="hash">#</span>
+        <span id="room-hash-icon" class="hash">#</span>
         <span id="room-name-header">global</span>
         <button id="leave-room-button" class="leave-room-button hidden" title="Leave room">Leave Room</button>
         <button id="delete-room-button" class="delete-room-button hidden" title="Delete room">Delete Room</button>
@@ -107,8 +152,27 @@
 
       <div id="typing-indicator" class="typing-indicator" aria-live="polite"></div>
 
+      <!-- AI Assistant voice conversation controls — shown only inside the AI room -->
+      <div id="ai-voice-bar" class="ai-voice-bar hidden">
+        <button id="ai-start-listening-btn" class="ai-voice-btn ai-start-btn" type="button">
+          <span class="ai-voice-btn-icon">🎤</span><span>Start Listening</span>
+        </button>
+        <button id="ai-stop-listening-btn" class="ai-voice-btn ai-stop-btn hidden" type="button">
+          <span class="ai-voice-btn-icon">🛑</span><span>Stop Listening</span>
+        </button>
+
+        <div id="ai-speaking-wave" class="ai-speaking-wave hidden" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <button id="ai-mute-btn" class="ai-voice-btn ai-mute-btn" type="button" aria-pressed="false">
+          <span class="ai-voice-btn-icon" id="ai-mute-icon">🔊</span><span id="ai-mute-label">Mute AI</span>
+        </button>
+      </div>
+
       <footer class="composer">
-        <div class="composer-box">
+        <!-- Normal text composer -->
+        <div id="composer-box" class="composer-box">
           <textarea
             id="message-input"
             placeholder="Message #global"
@@ -116,7 +180,7 @@
             rows="1"
             aria-label="Message input"
           ></textarea>
-          <button id="voice-button" type="button" aria-label="Record voice message" title="Record voice message">
+          <button id="voice-button" type="button" class="voice-button" aria-label="Hold to record a voice message" title="Hold to record">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
               <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"></path>
             </svg>
@@ -127,9 +191,49 @@
             </svg>
           </button>
         </div>
+
+        <!-- Advanced voice recording overlay (replaces composer while recording a
+             voice MESSAGE — regular rooms only, not the AI room) -->
+        <div id="recording-bar" class="recording-bar hidden">
+          <button id="cancel-recording-btn" class="recording-cancel-btn" type="button" aria-label="Cancel recording">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path>
+            </svg>
+          </button>
+
+          <span class="recording-dot"></span>
+          <span id="recording-timer" class="recording-timer">0:00</span>
+
+          <canvas id="recording-waveform" class="recording-waveform" width="300" height="36"></canvas>
+
+          <div id="slide-to-cancel" class="slide-to-cancel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 6l-6 6 6 6"/>
+            </svg>
+            <span>Slide to cancel</span>
+          </div>
+
+          <div id="lock-indicator" class="lock-indicator">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v3"/>
+              <path d="M12 2l3 3-3 3-3-3 3-3z"/>
+              <rect x="7" y="9" width="10" height="8" rx="2"/>
+            </svg>
+          </div>
+
+          <!-- Shown only once recording is locked hands-free -->
+          <div id="locked-actions" class="locked-actions hidden">
+            <button id="locked-cancel-btn" class="locked-cancel-btn" type="button" aria-label="Discard recording">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
+            </button>
+            <button id="locked-send-btn" class="locked-send-btn" type="button" aria-label="Send voice message">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+            </button>
+          </div>
+        </div>
+
         <div class="composer-meta">
           <span id="char-counter">0 / 500</span>
-          <span id="recording-status" class="recording-status"></span>
           <span id="composer-warning" class="composer-warning"></span>
         </div>
       </footer>

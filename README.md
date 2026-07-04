@@ -13,6 +13,13 @@ Built with Node.js, Express, and Socket.IO.
   someone else online, you're asked to pick another.
 - **Chat rooms** — a permanent **Global** room plus user-created rooms:
   create, join, leave, and delete (creator only).
+- **🤖 AI Assistant room** — a permanent, private room where each user has
+  their own 1:1 conversation with an AI. Two users in this room never see
+  each other's messages. The AI asks for your name on first visit,
+  remembers it (and anything else you tell it) across restarts via
+  SQLite, and can hold a full voice conversation: speak with your
+  microphone, hear natural spoken replies, mute/unmute, and see live
+  "thinking" and "speaking" animations.
 - **Real-time messaging** via WebSockets (Socket.IO), scoped per room —
   you only receive messages from the room you're currently in.
 - **Room sidebar** — lists all rooms with live online counts; the room
@@ -42,27 +49,35 @@ Built with Node.js, Express, and Socket.IO.
 chat-app/
 ├── package.json
 ├── README.md
+├── .gitignore
 ├── certs/                        # (created by you) local TLS cert/key for HTTPS
+├── data/                         # SQLite database for the AI Assistant room (auto-created)
+│   └── ai-assistant.db
 ├── scripts/
 │   └── generate-cert.sh          # generates a self-signed cert for local HTTPS
 ├── server/
-│   ├── index.js                  # Express + Socket.IO server, username + room logic
+│   ├── index.js                  # Express + Socket.IO server, rooms, AI room logic
+│   ├── db.js                     # SQLite persistence for AI memory + chat history
 │   └── utils/
 │       ├── sanitize.js           # XSS-safe HTML escaping
-│       └── rateLimiter.js        # Per-socket rate limiting (token bucket)
+│       ├── rateLimiter.js        # Per-socket rate limiting (token bucket)
+│       ├── aiClient.js           # OpenAI chat completions + text-to-speech calls
+│       └── nameExtractor.js      # Parses "my name is X" style replies
 └── public/
-    ├── index.html                 # Welcome screen + chat UI markup
+    ├── index.html                 # Welcome screen + chat UI + AI room markup
     ├── css/
-    │   └── style.css              # Dark theme, responsive layout, rooms UI
+    │   └── style.css              # Dark theme, responsive layout, AI room UI
     └── js/
-        └── app.js                 # Client-side Socket.IO logic (username + rooms)
+        └── app.js                 # Client-side Socket.IO logic (rooms, voice, AI)
 ```
 
 ## Requirements
 
-- Node.js 16 or newer
+- Node.js 18 or newer (uses the built-in global `fetch` to call OpenAI)
 - npm
 - `openssl` (only if you want to generate a local HTTPS certificate)
+- An [OpenAI API key](https://platform.openai.com/api-keys) (only needed
+  for the 🤖 AI Assistant room — the rest of the app works without one)
 
 ## Install & Run
 
@@ -87,6 +102,37 @@ tab a different username.
 ```bash
 PORT=4000 npm start
 ```
+
+## Setting Up the 🤖 AI Assistant Room
+
+The AI Assistant room works out of the box for browsing/joining, but to
+get real responses (instead of a "not configured yet" notice) you need an
+OpenAI API key:
+
+```bash
+OPENAI_API_KEY=sk-your-key-here npm start
+```
+
+Optional environment variables to customize it further:
+
+| Variable              | Default      | Purpose                                             |
+|------------------------|--------------|------------------------------------------------------|
+| `OPENAI_API_KEY`       | *(none)*     | Required for the AI to respond at all.               |
+| `OPENAI_CHAT_MODEL`    | `gpt-4o-mini`| Chat completion model used for replies.              |
+| `OPENAI_TTS_MODEL`     | `tts-1`      | Text-to-speech model.                                |
+| `OPENAI_TTS_VOICE`     | `nova`       | Voice used for spoken replies (`nova`/`shimmer` are OpenAI's natural, female-sounding options). |
+| `DB_PATH`              | `data/ai-assistant.db` | Where the SQLite database file lives.      |
+
+Without an API key set, the AI room still works structurally (you can
+open it, it'll ask your name, etc.) but replies with a friendly
+"the AI assistant isn't configured yet" message instead of a real answer.
+
+**Browser support note:** the "Start Listening" voice-input feature uses
+the browser's built-in Web Speech API (`SpeechRecognition`), which is
+supported in Chrome, Edge, and Safari, but not in Firefox at the time of
+writing. Typing still works everywhere regardless. Voice **playback**
+(the AI speaking back to you) works in every modern browser since it's
+just an `<audio>` element playing an MP3 from OpenAI's TTS API.
 
 ## Running Over HTTPS
 
@@ -200,10 +246,43 @@ WebSocket handshake to pass through the proxy correctly.
   to the current room.
 - Join/leave system messages are posted to the room being entered/left,
   not the whole site.
-- **No persistence** — everything lives in a few in-memory `Map`/`Set`
-  structures in `server/index.js`. Restarting the process wipes all
-  users, rooms, and messages, which is the intended behavior for this
-  lightweight, account-free chat app.
+- **No persistence for regular rooms** — everything lives in a few
+  in-memory `Map`/`Set` structures in `server/index.js`. Restarting the
+  process wipes all users, rooms, and messages there, which is the
+  intended behavior for this lightweight, account-free chat app.
+
+### 🤖 AI Assistant room (private, persistent)
+
+Unlike every other room, the AI Assistant room is **not** a shared space:
+
+- It's a permanent system room (like Global) that shows up in everyone's
+  room list, but messages inside it are **never broadcast** — the server
+  only ever `socket.emit`s to the sender's own socket, so two users "in"
+  the AI room never see each other's conversation.
+- **First visit:** the AI greets you and asks what to call you. Your next
+  message is parsed (via `server/utils/nameExtractor.js`, handling
+  replies like "My name is Sami" or just "Sami") and stored as your
+  preferred name in SQLite (`server/db.js`), keyed by your chat username.
+- **Memory:** every user/assistant turn is saved to a `conversations`
+  table. Each new AI reply is generated by sending the system prompt +
+  your last 30 stored messages to OpenAI's chat completion API, so the
+  model naturally recalls things you mentioned earlier (like a favorite
+  team) as long as they're within that window — the same way a real
+  assistant "remembers" during a conversation. This all survives server
+  restarts because it's on disk, not in memory.
+- **History on reopen:** every time you (re)enter the AI room, the server
+  loads your saved history from SQLite and sends it back to just you via
+  an `ai history` event, so the conversation picks up where you left off.
+- **Voice conversation:** clicking "🎤 Start Listening" uses the browser's
+  Web Speech API to turn your speech into text, which is sent through the
+  exact same `chat message` pipeline as typing (with a `voiceMode: true`
+  flag). If voice mode is on, the server also calls OpenAI's
+  text-to-speech endpoint and sends the reply back as an audio data URL,
+  which the client plays automatically (with a 🔊 speaker button on every
+  AI bubble to replay/request narration on demand, and a "🔊 Mute AI"
+  toggle that immediately stops playback and suppresses future auto-play).
+- **Rate limiting and XSS protection apply here too** — the AI room reuses
+  the same per-socket rate limiter and HTML-escaping as regular chat.
 
 ## Security Notes
 
@@ -222,3 +301,9 @@ WebSocket handshake to pass through the proxy correctly.
   base64 data URL, size- and duration-capped, and rate-limited
   server-side using the same limiter as text messages — it is relayed to
   the room, never written to disk.
+- Your OpenAI API key lives only in the server's environment and is never
+  sent to the browser. All OpenAI calls (chat completions and
+  text-to-speech) happen server-side in `server/utils/aiClient.js`.
+- AI Assistant replies are HTML-escaped the same way user messages are
+  before being sent to the browser, so model output can't inject markup
+  either.
